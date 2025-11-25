@@ -237,7 +237,7 @@ def render_scorecard(scores: dict, raw_data: dict, zip_code: str) -> dict:
         with mcols[idx % 4]:
             # Get metric info
             info = metric_info.get(metric_name, {})
-            icon = info.get("icon", "📊")
+            icon = info.get("icon", "D:\Zip_Finds\graph_icon.ico")
             raw_source = info.get("raw_source", "")
             raw_key = info.get("raw_key")
             raw_label = info.get("raw_label", "")
