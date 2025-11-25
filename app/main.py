@@ -36,7 +36,7 @@ def main():
 
     with st.sidebar:
         st.header("Input ZIP")
-        zip_code_input = st.text_input("ZIP Code (US)", value=st.session_state.selected_zip or "07306")
+        zip_code_input = st.text_input("ZIP Code (US)", value=st.session_state.selected_zip)
         persona = st.selectbox("Persona", PERSONAS, index=PERSONAS.index(st.session_state.selected_persona))
 
         run = st.button("Analyze ZIP")
