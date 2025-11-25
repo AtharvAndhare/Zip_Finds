@@ -24,7 +24,7 @@ from app.chatbot import answer_followup
 def main():
     st.set_page_config(page_title="Civic Intelligence AI", layout="wide")
 
-    st.title("🏙️ Civic Intelligence AI (Python, Data-Driven)")
+    st.title("🏙️ Zip Finds AI - Your AI-Powered ZIP Code Analyzer(Python, Data-Driven)")
 
     # Initialize session state the first time the app loads
     if "raw_data" not in st.session_state:
