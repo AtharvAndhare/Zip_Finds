@@ -100,7 +100,7 @@ def plot_radial(scores: dict):
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=20, r=20, t=50, b=20),
-        title=dict(text="📊 Radial Civic Score Overview", font=dict(size=22)),
+        title=dict(text="Radial Civic Score Overview", font=dict(size=22)),
         barmode='overlay'
     )
     

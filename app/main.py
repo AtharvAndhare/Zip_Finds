@@ -83,7 +83,7 @@ def main():
     col1, col2 = st.columns([1.4, 1])
 
     with col1:
-        st.subheader("📊 Scorecard")
+        st.subheader(" Scorecards")
 
         # Use the scorecard component that computes and displays dynamic values
         computed_scores = render_scorecard(scores, raw_data, zip_code)
