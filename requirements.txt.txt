@@ -1,6 +1,0 @@
-streamlit
-matplotlib
-numpy
-google-generativeai
-openai
-pydantic
