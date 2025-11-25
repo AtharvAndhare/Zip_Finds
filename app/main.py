@@ -22,7 +22,7 @@ from app.chatbot import answer_followup
 
 
 def main():
-    st.set_page_config(page_title="Civic Intelligence AI", layout="wide")
+    st.set_page_config(page_title="Zip Finds AI", layout="wide")
 
     st.title("🏙️ Zip Finds AI - Your AI-Powered ZIP Code Analyzer(Python, Data-Driven)")
 
