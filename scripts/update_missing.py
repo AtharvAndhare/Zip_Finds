@@ -1,35 +1,35 @@
-import sys
+# scripts/update_missing.py
+
+import os, sys, time
 from pathlib import Path
 
-# Add project root to Python path
-project_root = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(project_root))
+# fix imports
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT))
 
-import time
 from db.supabase_client import supabase
 from core.aggregator import collect_all_data
 from db.zip_cache import store_zip_data
 
+
 def fetch_missing():
-    # get rows where data IS NULL
-    res = supabase.table("zip_cache").select("zip_code").is_(
-        "data", None).limit(1).execute()
+    res = supabase.table("zip_cache").select("zip_code").is_("data", None).limit(1).execute()
 
     if not res.data:
-        print("✨ All ZIPs loaded!")
+        print("✨ No missing records! All good.")
         return False
 
     zip_code = res.data[0]["zip_code"]
-    print(f"🌎 Fetching ZIP {zip_code}")
+    print(f"🌎 Processing ZIP {zip_code}")
 
     try:
-        data = collect_all_data(zip_code)  # pull APIs
-        store_zip_data(zip_code, data)     # save to DB
+        data = collect_all_data(zip_code)
+        store_zip_data(zip_code, data)
         print(f"   ✔ Cached {zip_code}")
     except Exception as e:
         print(f"   ❌ Failed {zip_code}: {e}")
 
-    time.sleep(1.5)  # throttle to avoid API bans
+    time.sleep(1.5)
     return True
 
 
