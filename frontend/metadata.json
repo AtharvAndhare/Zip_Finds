@@ -1,0 +1,8 @@
+
+{
+  "name": "Zip Finds",
+  "description": "A comprehensive civic data exploration tool that analyzes US zip codes across 8 categories including health, safety, and economic opportunity, featuring AI-powered insights and comparative analytics.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
