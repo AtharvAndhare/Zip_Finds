@@ -1,6 +1,9 @@
 # data_sources/housing_api.py
+
+import functools
 import time
 from urllib.parse import urlencode
+from concurrent.futures import ThreadPoolExecutor
 import requests
 from config.settings import settings
 
@@ -14,21 +17,36 @@ CENSUS_API_KEY = settings.CENSUS_API_KEY or None
 # =============================
 ACS_YEARS = ["2022", "2021", "2020"]
 
+# =============================
+# Shared session for connection pooling
+# =============================
+_session = None
+
+def _get_session():
+    """Reuse HTTP session for connection pooling."""
+    global _session
+    if _session is None:
+        _session = requests.Session()
+    return _session
+
 
 # ============================================================
-# SAFE REQUEST WRAPPER (Retries + Timeout)
+# SAFE REQUEST WRAPPER (Retries + Timeout + Connection Reuse)
 # ============================================================
-def safe_census_get(url, retries=3, timeout=12):
+def safe_census_get(url, retries=2, timeout=10):
+    """OPTIMIZED: Reduced retries, shorter timeout, connection pooling."""
+    session = _get_session()
     for attempt in range(retries):
         try:
-            resp = requests.get(url, timeout=timeout)
+            resp = session.get(url, timeout=timeout)
             resp.raise_for_status()
             return resp.json()
         except Exception:
             if attempt < retries - 1:
-                time.sleep(0.6)
+                time.sleep(0.3)
             else:
-                raise
+                return None
+    return None
 
 
 # ============================================================
@@ -51,46 +69,43 @@ def census_query(vars: str, zip_code: str):
 
             # Use urlencode for proper URL encoding
             url = base + "?" + urlencode(params)
-            return safe_census_get(url)
-        except Exception as e:
-            # Try next year if this one fails
+            result = safe_census_get(url)
+            if result and len(result) > 1:
+                return result
+        except Exception:
             continue
     return None  # all years failed
 
 
+@functools.lru_cache(maxsize=500)
 def fetch_housing_data(zip_code: str) -> dict:
     """
     Fetch housing data from Census API.
+    
+    OPTIMIZED:
+    - LRU cache prevents redundant fetches
+    - Both Census queries run IN PARALLEL
+    - Connection pooling for faster HTTP
+    
     Returns median rent and rent burden ratio.
     """
     try:
-        # ===============================================
-        # 1) MEDIAN GROSS RENT (B25064_001E)
-        # Response format: [["B25064_001E", "state", "zip code tabulation area"], ["value", ...]]
-        # Value is at index 0 of the data row
-        # ===============================================
-        rent_resp = census_query("B25064_001E", zip_code)
-        if not rent_resp:
-            print(f"[Census Housing] WARNING: No rent data found for ZIP {zip_code}")
+        # Define burden variables
+        burden_vars = ",".join([f"B25070_{str(i).zfill(3)}E" for i in range(1, 11)])
+        
+        # Run both Census queries in parallel
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_rent = executor.submit(census_query, "B25064_001E", zip_code)
+            future_burden = executor.submit(census_query, burden_vars, zip_code)
+            
+            rent_resp = future_rent.result()
+            burden_resp = future_burden.result()
+
+        # Process rent response
         median_rent = _safe_extract(rent_resp, 0) if rent_resp else None
 
-        # ===============================================
-        # 2) RENT BURDEN (B25070: % of income → rent)
-        #    Query includes total (001E) and categories (002E-010E)
-        #    B25070_001E = Total, B25070_002E-010E = burden categories
-        # ===============================================
-        # Query from 1-10 (001E through 010E) - includes total + 9 categories
-        burden_vars = ",".join([f"B25070_{str(i).zfill(3)}E" for i in range(1, 11)])
-        burden_resp = census_query(burden_vars, zip_code)
-        if not burden_resp:
-            print(f"[Census Housing] WARNING: No rent burden data found for ZIP {zip_code}")
-        else:
-            # Debug: Check response structure
-            if len(burden_resp) > 1 and len(burden_resp[1]) > 0:
-                print(f"[Census Housing] DEBUG: Rent burden response received for ZIP {zip_code}, row length: {len(burden_resp[1])}")
+        # Process burden response
         rent_burden_pct = _process_rent_burden(burden_resp) if burden_resp else None
-        if rent_burden_pct is None and burden_resp:
-            print(f"[Census Housing] WARNING: Rent burden processing returned None for ZIP {zip_code}")
 
         return {
             "median_rent": median_rent,

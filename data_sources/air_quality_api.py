@@ -1,8 +1,21 @@
 # data_sources/air_quality_api.py
 
+import functools
 import requests
 from config.settings import settings
 
+# Shared session for connection pooling
+_session = None
+
+def _get_session():
+    """Reuse HTTP session for connection pooling."""
+    global _session
+    if _session is None:
+        _session = requests.Session()
+    return _session
+
+
+@functools.lru_cache(maxsize=500)
 def fetch_air_quality_data(zip_code: str) -> dict:
     """
     Fetch AQI from AirNow API. If API fails, return fallback.
@@ -17,7 +30,8 @@ def fetch_air_quality_data(zip_code: str) -> dict:
             "https://www.airnowapi.org/aq/observation/zipCode/current/"
             f"?format=application/json&zipCode={zip_code}&distance=25&API_KEY={api_key}"
         )
-        resp = requests.get(url, timeout=12)
+        session = _get_session()
+        resp = session.get(url, timeout=8)
         resp.raise_for_status()
         data = resp.json()
 

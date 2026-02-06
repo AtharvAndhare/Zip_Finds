@@ -1,7 +1,10 @@
 # data_sources/census_api.py
+
+import functools
 import random
 import time
 import requests
+from concurrent.futures import ThreadPoolExecutor
 from config.settings import settings
 
 # =============================
@@ -14,20 +17,38 @@ CENSUS_API_KEY = settings.CENSUS_API_KEY or None
 # =============================
 ACS_YEARS = ["2022", "2021", "2020"]
 
+# =============================
+# Shared session for connection pooling
+# =============================
+_session = None
+
+def _get_session():
+    """Reuse HTTP session for connection pooling."""
+    global _session
+    if _session is None:
+        _session = requests.Session()
+    return _session
+
 
 # ============================================================
-# SAFE REQUEST WRAPPER (Retries + Timeout + Friendly Fail)
+# SAFE REQUEST WRAPPER (Retries + Timeout + Connection Reuse)
 # ============================================================
-def _safe_req(url, retries=3, timeout=12):
+def _safe_req(url, retries=2, timeout=10):
+    """
+    OPTIMIZED: Reduced retries (2 vs 3), shorter timeout, connection pooling.
+    """
+    session = _get_session()
     for attempt in range(retries):
         try:
-            resp = requests.get(url, timeout=timeout)
+            resp = session.get(url, timeout=timeout)
             resp.raise_for_status()
             return resp.json()
         except Exception:
-            sleep = random.uniform(0.8, 2.0)
-            time.sleep(sleep)
+            if attempt < retries - 1:
+                sleep = random.uniform(0.3, 0.8)  # Reduced sleep time
+                time.sleep(sleep)
     return None
+
 
 # ============================================================
 # GENERIC CENSUS QUERY WITH YEAR FALLBACK
@@ -53,7 +74,7 @@ def _census(vars: str, zip_code: str):
         if data and len(data) > 1:
             return data
 
-    return None  # ❗ no valid response across all years
+    return None  # no valid response across all years
 
 
 # ============================================================
@@ -75,26 +96,25 @@ def _clean(value):
 
 
 # ============================================================
-# MAIN FETCH FUNCTION
+# MAIN FETCH FUNCTION (OPTIMIZED with Parallel Calls + Cache)
 # ============================================================
+@functools.lru_cache(maxsize=500)
 def fetch_census_data(zip_code: str) -> dict:
     """
-    Fetch Census ZIP-level:
-
-    - Median household income  (B19013_001E)
-    - Education: % bachelor's or higher (B15003)
-    - Weighted resident base (population × household size adjustment)
+    Fetch Census ZIP-level data.
+    
+    OPTIMIZED:
+    - LRU cache prevents redundant fetches for same ZIP
+    - All 4 Census queries run IN PARALLEL (saves ~60% time)
+    - Connection pooling for faster HTTP
+    
+    Returns:
+        - median_income: Median household income (B19013_001E)
+        - bachelors_rate: % with bachelor's or higher (B15003)
+        - resident_base: Population weighted by household size
     """
-
-    # --------------------------------------------------------
-    # 1) MEDIAN INCOME
-    # --------------------------------------------------------
-    inc_resp = _census("B19013_001E", zip_code)
-    median_income = _clean(inc_resp[1][0]) if inc_resp else None
-
-    # --------------------------------------------------------
-    # 2) EDUCATION (Bachelor's + Postgraduate %)
-    # --------------------------------------------------------
+    
+    # Define all Census variable queries
     edu_vars = ",".join([
         "B15003_001E",  # total 25+
         "B15003_022E",  # Bachelor's
@@ -102,8 +122,27 @@ def fetch_census_data(zip_code: str) -> dict:
         "B15003_024E",  # Professional degree
         "B15003_025E"   # Doctorate
     ])
-    edu_resp = _census(edu_vars, zip_code)
+    
+    # Run all 4 Census queries in parallel
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        future_income = executor.submit(_census, "B19013_001E", zip_code)
+        future_edu = executor.submit(_census, edu_vars, zip_code)
+        future_pop = executor.submit(_census, "B01003_001E", zip_code)
+        future_hh = executor.submit(_census, "S1101_C01_002E", zip_code)
+        
+        inc_resp = future_income.result()
+        edu_resp = future_edu.result()
+        pop_resp = future_pop.result()
+        hh_resp = future_hh.result()
 
+    # --------------------------------------------------------
+    # 1) MEDIAN INCOME
+    # --------------------------------------------------------
+    median_income = _clean(inc_resp[1][0]) if inc_resp else None
+
+    # --------------------------------------------------------
+    # 2) EDUCATION (Bachelor's + Postgraduate %)
+    # --------------------------------------------------------
     bachelors_rate = None
     if edu_resp:
         total = _clean(edu_resp[1][0])
@@ -114,9 +153,6 @@ def fetch_census_data(zip_code: str) -> dict:
     # --------------------------------------------------------
     # 3) RESIDENT BASE (Population Weighted by Household Size)
     # --------------------------------------------------------
-    pop_resp = _census("B01003_001E", zip_code)
-    hh_resp = _census("S1101_C01_002E", zip_code)
-
     total_pop = _clean(pop_resp[1][0]) if pop_resp else None
     hh_size = _clean(hh_resp[1][0]) if hh_resp else 2.5  # fallback
 

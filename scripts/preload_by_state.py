@@ -10,11 +10,15 @@ from db.zip_cache import store_zip_data, get_cached_zip
 from scripts.utils.load_zip_csv import load_zips_by_state
 
 
-def preload_state(state: str):
+def preload_state(state: str, batch_size: int | None = None):
     zips = load_zips_by_state(state)
 
+    # If batch mode, limit ZIP list
+    if batch_size:
+        zips = zips[:batch_size]
+
     total = len(zips)
-    print(f"\n🚀 Starting preload for state {state} ({total} ZIP codes)\n")
+    print(f"\n🚀 Starting preload for {state} ({total} ZIP codes)\n")
 
     for idx, zip_code in enumerate(zips, start=1):
 
@@ -32,13 +36,18 @@ def preload_state(state: str):
         except Exception as e:
             print(f"❌ failed: {e}")
 
-        # Sleep to prevent API bans (randomized)
+        # Sleep randomized to avoid bans
         time.sleep(1.0 + random.random() * 1.0)  # 1.0–2.0 seconds
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("\n❗ Usage: python preload_by_state.py <STATE_ABBR>\nExample: python preload_by_state.py NJ\n")
+        print("\n❗ USAGE: python preload_by_state.py <STATE> [BATCH_SIZE]\n"
+              "💡 Example full:     python preload_by_state.py NJ\n"
+              "💡 Example batched:  python preload_by_state.py NJ 500\n")
         sys.exit(1)
 
-    preload_state(sys.argv[1].upper())
+    state = sys.argv[1].upper()
+    size = int(sys.argv[2]) if len(sys.argv) >= 3 else None
+
+    preload_state(state, size)

@@ -1,14 +1,14 @@
 # data_sources/crime_api.py
 
+import functools
 import requests
 from data_sources.census_api import fetch_census_data
-#from data_sources.osm_api import fetch_osm_data
 from data_sources.osm_api import fetch_osm_poi_data
 
 
 # ======================================================
-# 🔵 FBI Violent Crime Rate (per 100k) — 2023 Snapshot
-#    Source: FBI Crime Data Explorer
+# FBI Violent Crime Rate (per 100k) — 2023 Snapshot
+# Source: FBI Crime Data Explorer
 # ======================================================
 FBI_STATE_CRIME = {
     "Alabama": 458, "Alaska": 837, "Arizona": 483, "Arkansas": 645, "California": 442,
@@ -27,9 +27,11 @@ FBI_STATE_CRIME = {
 
 
 # ======================================================
-# 🟢 Infer City & State using Census (minimal calls)
+# Cached State Lookup (avoids repeated API calls)
 # ======================================================
+@functools.lru_cache(maxsize=500)
 def get_state_from_zip(zip_code: str) -> str | None:
+    """Get state name from ZIP code. Cached to avoid repeat calls."""
     try:
         url = f"https://api.census.gov/data/2022/acs/acs5?get=NAME&for=zip%20code%20tabulation%20area:{zip_code}"
         data = requests.get(url, timeout=10).json()
@@ -41,33 +43,42 @@ def get_state_from_zip(zip_code: str) -> str | None:
 
 
 # ======================================================
-# 🔐 CRIME PROXY MODEL (0–100 scale)
+# OPTIMIZED: Compute crime score with pre-fetched data
 # ======================================================
-def fetch_crime_data(zip_code: str) -> dict:
+def compute_crime_score(zip_code: str, census_data: dict = None, osm_data: dict = None) -> dict:
     """
-    Returns { "crime_per_1k": <score 0–100> } 
-    Uses proxy model if police data unavailable.
+    Compute crime proxy score using pre-fetched data.
+    
+    OPTIMIZED: Accepts census_data and osm_data to avoid duplicate API calls
+    when called from aggregator (which already fetched these).
+    
+    Args:
+        zip_code: The ZIP code
+        census_data: Pre-fetched census data (optional, will fetch if None)
+        osm_data: Pre-fetched OSM data (optional, will fetch if None)
+    
+    Returns:
+        { "crime_per_1k": <score 0–100> }
     """
-
     # 1) State-level violent crime baseline
     state = get_state_from_zip(zip_code)
     baseline = FBI_STATE_CRIME.get(state, 400)  # national avg fallback
 
-    # 2) Local socio-economic risk (inverse)
-    census = fetch_census_data(zip_code)
+    # 2) Use provided census data or fetch if not provided
+    census = census_data if census_data else fetch_census_data(zip_code)
     income = census.get("median_income", None)
     edu = census.get("bachelors_rate", None)
 
     income_risk = 1 - (min(max((income or 0) / 120000, 0), 1))
     edu_risk = 1 - (min(max((edu or 0) / 60, 0), 1))
 
-    # 3) Police presence proxy using OSM (fewer stations = more risk)
-    osm = fetch_osm_poi_data(zip_code)
+    # 3) Use provided OSM data or fetch if not provided
+    osm = osm_data if osm_data else fetch_osm_poi_data(zip_code)
     police_count = osm.get("police_stations", 0)
     police_presence = min(police_count / 12, 1)  # normalized
 
     # -------------------------------------------------
-    # 🧮 Weighted Criminality Index
+    # Weighted Criminality Index
     # -------------------------------------------------
     score_raw = (
         0.45 * (baseline / 1000) +  # scale FBI to similar units
@@ -80,3 +91,16 @@ def fetch_crime_data(zip_code: str) -> dict:
     score_scaled = max(0, min(score_raw * 100, 100))
 
     return {"crime_per_1k": round(score_scaled, 1)}
+
+
+# ======================================================
+# Legacy function (for backwards compatibility)
+# ======================================================
+def fetch_crime_data(zip_code: str) -> dict:
+    """
+    Returns { "crime_per_1k": <score 0–100> } 
+    Uses proxy model if police data unavailable.
+    
+    NOTE: For better performance, use compute_crime_score() with pre-fetched data.
+    """
+    return compute_crime_score(zip_code)

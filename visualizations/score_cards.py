@@ -159,116 +159,68 @@ def render_scorecard(scores: dict, raw_data: dict, zip_code: str) -> dict:
     # Compute scores directly from raw_data using math
     computed_scores = compute_scores_from_raw(raw_data)
     
-    # Debug: Show ZIP code being analyzed
-    st.caption(f" Analyzing ZIP Code: {zip_code} | Computed dynamically from raw data")
-    
+    st.caption(f"ZIP {zip_code} | Each metric normalized to 0-100 from raw data")
+
     overall = computed_scores.get("OverallCivicScore", 0)
     metric_scores = {k: v for k, v in computed_scores.items() if k != "OverallCivicScore"}
-    
-    # Verify scores are valid numbers
+
     if not computed_scores or len(computed_scores) == 0:
-        st.warning("⚠️ No scores computed. Check raw data collection.")
+        st.warning("No scores computed. Check raw data collection.")
         return
-    
-    # Display overall score
+
     st.metric("Overall Civic Score", f"{overall:.1f} / 100")
-    st.caption(f" Weighted average computed from raw data for ZIP {zip_code}")
-    
-    # Display individual metric scores in a grid
+
     st.markdown("#### Individual Metrics")
-    
-    # Create columns for metrics (4 columns)
+
     mcols = st.columns(4)
-    
-    # Map metric names to display names and raw data sources
-    metric_info = {
-        "Safety": {
-            "icon": "🛡️",
-            "raw_source": "crime",
-            "raw_key": "crime_per_1k",
-            "raw_label": "Crime Rate"
-        },
-        "Health": {
-            "icon": "🏥",
-            "raw_source": "health",
-            "raw_key": None,
-            "raw_label": "Primary Care: {primary_care_centers}, Hospitals: {hospitals}"
-        },
-        "Education": {
-            "icon": "🎓",
-            "raw_source": "census",
-            "raw_key": "bachelors_rate",
-            "raw_label": "Bachelor's Rate"
-        },
-        "EconomicOpportunity": {
-            "icon": "💰",
-            "raw_source": "census",
-            "raw_key": "median_income",
-            "raw_label": "Median Income"
-        },
-        "HousingAffordability": {
-            "icon": "🏠",
-            "raw_source": "housing",
-            "raw_key": "median_rent",
-            "raw_label": "Median Rent"
-        },
-        "DigitalAccess": {
-            "icon": "📡",
-            "raw_source": "broadband",
-            "raw_key": "broadband_pct",
-            "raw_label": "Broadband %"
-        },
-        "Environment": {
-            "icon": "🌍",
-            "raw_source": "air_quality",
-            "raw_key": "aqi",
-            "raw_label": "AQI"
-        },
-        "Accessibility": {
-            "icon": "🚶",
-            "raw_source": "osm",
-            "raw_key": None,
-            "raw_label": "POIs"
-        }
+
+    # Each entry: (display_name, source_dict_key, raw_key, format_fn)
+    # format_fn turns the raw value into a readable string
+    metric_raw_map = {
+        "Safety": ("crime", "crime_per_1k",
+                   lambda v: f"Crime rate: {v:.1f} per 1k"),
+        "Health": ("health", None,
+                   None),
+        "Education": ("census", "bachelors_rate",
+                      lambda v: f"Bachelor's: {v:.1f}%"),
+        "EconomicOpportunity": ("census", "median_income",
+                                lambda v: f"Income: ${v:,.0f}"),
+        "HousingAffordability": ("housing", "rent_to_income",
+                                 lambda v: f"Rent-to-income: {v*100:.1f}%"),
+        "DigitalAccess": ("broadband", "broadband_pct",
+                          lambda v: f"Broadband: {v:.1f}%"),
+        "Environment": ("air_quality", "aqi",
+                        lambda v: f"AQI: {v:.0f}"),
+        "Accessibility": ("osm", None,
+                          None),
     }
-    
+
     items = list(metric_scores.items())
     for idx, (metric_name, score_value) in enumerate(items):
         with mcols[idx % 4]:
-            # Get metric info
-            info = metric_info.get(metric_name, {})
-            
-            raw_source = info.get("raw_source", "")
-            raw_key = info.get("raw_key")
-            raw_label = info.get("raw_label", "")
-            
-            # Display metric
-            st.metric(f" {metric_name}", f"{score_value:.1f}")
-            
-            # Show raw data value as caption if available
-            if raw_source and raw_source in raw_data:
-                source_data = raw_data[raw_source]
-                
-                if raw_key and raw_key in source_data:
+            st.metric(metric_name, f"{score_value:.1f}")
+
+            entry = metric_raw_map.get(metric_name)
+            if entry:
+                src_key, raw_key, fmt_fn = entry
+                source_data = raw_data.get(src_key, {}) or {}
+
+                if raw_key and raw_key in source_data and fmt_fn:
                     raw_value = source_data[raw_key]
                     if raw_value is not None:
-                        if isinstance(raw_value, (int, float)):
-                            if "Income" in raw_label or "Rent" in raw_label:
-                                st.caption(f"${raw_value:,.0f}" if raw_value > 1000 else f"${raw_value:.0f}")
-                            elif "Rate" in raw_label or "Crime" in raw_label or "%" in raw_label:
-                                st.caption(f"{raw_value:.1f}")
-                            else:
-                                st.caption(f"{raw_value:.1f}")
-                        else:
+                        try:
+                            st.caption(fmt_fn(float(raw_value)))
+                        except (ValueError, TypeError):
                             st.caption(str(raw_value))
                 elif metric_name == "Health":
-                    primary = source_data.get("primary_care_centers", 0)
-                    hospitals = source_data.get("hospitals", 0)
-                    st.caption(f"PC: {primary}, Hosp: {hospitals}")
+                    pc = source_data.get("primary_care_centers", 0)
+                    hosp = source_data.get("hospitals", 0)
+                    st.caption(f"PC: {pc}, Hosp: {hosp}")
                 elif metric_name == "Accessibility":
                     parks = source_data.get("parks", 0)
                     grocery = source_data.get("grocery_stores", 0)
-                    st.caption(f"Parks: {parks}, Stores: {grocery}")
+                    transit = source_data.get("transit_stops", 0)
+                    st.caption(f"Parks: {parks}, Groc: {grocery}, Trans: {transit}")
     
     # Return computed scores for use in other components
     return computed_scores

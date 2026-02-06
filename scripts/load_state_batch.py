@@ -14,13 +14,12 @@ from db.zip_cache import store_zip_data
 
 # === USER SETTINGS HERE ===
 STATE_CODE = "NY"         # CHANGE manually
-BATCH_SIZE = 500
+BATCH_SIZE = 10
 SLEEP_BETWEEN = 1.2
 
-
 # === LOAD ZIP LIST FROM CSV ===
-df = pd.read_csv("uszips.csv")
-state_zips = df[df["state"] == STATE_CODE]["zip"].astype(str).tolist()
+df = pd.read_csv(r"D:\Zip_Finds\simplemaps_uszips_basicv1.92\uszips.csv")
+state_zips = df[df["state_id"] == STATE_CODE]["zip"].astype(str).tolist()
 
 
 def get_cached_zips():
