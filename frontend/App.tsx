@@ -1,7 +1,7 @@
 
 import React, { useState, Suspense } from 'react';
 import { Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, BarChart3, MapPin, Menu, X, Info, Github, Loader2 } from 'lucide-react';
+import { Search, BarChart3, Menu, X, Info, Github, Loader2 } from 'lucide-react';
 import Home from './pages/Home';
 import Analysis from './pages/Analysis';
 import Compare from './pages/Compare';
@@ -46,9 +46,7 @@ const App: React.FC = () => {
           <div className="flex justify-between h-20 items-center">
             <div className="flex items-center space-x-2">
               <Link to="/" className="flex items-center space-x-2 group">
-                <div className="bg-brand p-2 rounded-xl group-hover:bg-brand-hover transition-all transform group-hover:scale-105">
-                  <MapPin className="h-6 w-6 text-white" />
-                </div>
+                <img src="/logo.png" alt="Zip Finds" className="h-10 w-auto group-hover:scale-105 transition-transform" />
                 <span className="text-2xl font-black tracking-tighter text-black uppercase">
                   Zip Finds
                 </span>
@@ -132,9 +130,7 @@ const App: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-16 mb-16">
             <div>
               <div className="flex items-center space-x-3 text-white mb-6">
-                <div className="bg-brand p-1.5 rounded-lg">
-                  <MapPin className="h-5 w-5" />
-                </div>
+                <img src="/logo.png" alt="Zip Finds" className="h-9 w-auto brightness-0 invert" />
                 <span className="text-xl font-black uppercase tracking-tighter">Zip Finds</span>
               </div>
               <p className="text-white/60 text-sm leading-loose">

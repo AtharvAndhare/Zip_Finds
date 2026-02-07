@@ -30,9 +30,12 @@ const Home: React.FC = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-black/[0.05] rounded-full -z-10"></div>
         
         <div className="z-10 max-w-5xl mx-auto">
-          <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full border border-black/10 bg-white/50 backdrop-blur-sm text-black text-xs font-black uppercase tracking-widest mb-10">
-            <Sparkles className="h-3 w-3 text-brand" />
-            <span>Understand Any Neighborhood Using ZipFinds</span>
+          <div className="flex flex-col items-center mb-10">
+            <img src="/logo.png" alt="Zip Finds" className="h-24 w-auto mb-6" />
+            <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full border border-black/10 bg-white/50 backdrop-blur-sm text-black text-xs font-black uppercase tracking-widest">
+              <Sparkles className="h-3 w-3 text-brand" />
+              <span>Understand Any Neighborhood Using ZipFinds</span>
+            </div>
           </div>
           <h1 className="text-6xl md:text-9xl font-black text-black mb-8 tracking-tighter uppercase leading-[0.9]">
             Civic Intelligence <br/><span className="text-brand">for Everyone.</span>
