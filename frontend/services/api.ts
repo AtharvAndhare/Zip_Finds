@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { ZipAnalysis, ChatResponse } from '../types';
 
-// Use relative URLs so requests go through Vite's dev proxy.
-// The proxy (vite.config.ts) forwards /api/* to the Flask backend.
-// For production, set VITE_API_URL to your deployed backend URL.
+// In development: empty string → requests use Vite's dev proxy (/api → localhost:5000)
+// In production:  VITE_API_URL → your Render backend (e.g. https://zipfinds-api.onrender.com)
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '';
 
 const apiClient = axios.create({
