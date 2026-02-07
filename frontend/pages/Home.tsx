@@ -31,7 +31,7 @@ const Home: React.FC = () => {
         
         <div className="z-10 max-w-5xl mx-auto">
           <div className="flex flex-col items-center mb-10">
-            <img src="/logo.png" alt="Zip Finds" className="h-24 w-auto mb-6" />
+            <img src="/logo.png" alt="Zip Finds" className="h-48 w-auto mb-6" />
             <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full border border-black/10 bg-white/50 backdrop-blur-sm text-black text-xs font-black uppercase tracking-widest">
               <Sparkles className="h-3 w-3 text-brand" />
               <span>Understand Any Neighborhood Using ZipFinds</span>
