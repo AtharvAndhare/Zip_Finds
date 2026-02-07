@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { ZipAnalysis, ChatResponse } from '../types';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000';
+// Use relative URLs so requests go through Vite's dev proxy.
+// The proxy (vite.config.ts) forwards /api/* to the Flask backend.
+// For production, set VITE_API_URL to your deployed backend URL.
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

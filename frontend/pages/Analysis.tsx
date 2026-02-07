@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Plot from 'react-plotly.js';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import {
   ChevronLeft, AlertCircle, Loader2, Send,
   DollarSign, Home as HomeIcon, Wifi, Heart, Bot,
@@ -9,6 +9,27 @@ import {
 } from 'lucide-react';
 import { analyzeZip, chatWithZip, fetchNarrative } from '../services/api';
 import { ZipAnalysis } from '../types';
+
+/** Forces Leaflet to recalculate tile grid after mount / resize */
+const InvalidateSize: React.FC = () => {
+  const map = useMap();
+  useEffect(() => {
+    // Small delay to ensure the container is fully rendered
+    const timer = setTimeout(() => map.invalidateSize(), 300);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+};
+
+/** Re-centers map when coordinates change */
+const RecenterMap: React.FC<{ lat: number; lon: number }> = ({ lat, lon }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lon], 12);
+    setTimeout(() => map.invalidateSize(), 300);
+  }, [lat, lon, map]);
+  return null;
+};
 
 const Analysis: React.FC = () => {
   const { zip } = useParams<{ zip: string }>();
@@ -238,11 +259,13 @@ const Analysis: React.FC = () => {
 
           {/* Map */}
           <div className="bg-white rounded-[3rem] border border-black/5 shadow-sm h-64 overflow-hidden relative">
-            <MapContainer center={[lat, lon]} zoom={12} scrollWheelZoom={false} key={`${lat}-${lon}`}>
+            <MapContainer center={[lat, lon]} zoom={12} scrollWheelZoom={false}>
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               <Marker position={[lat, lon]}>
                 <Popup>ZIP {data.zip_code}</Popup>
               </Marker>
+              <InvalidateSize />
+              <RecenterMap lat={lat} lon={lon} />
             </MapContainer>
           </div>
         </div>
