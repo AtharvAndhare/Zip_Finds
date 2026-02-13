@@ -33,7 +33,7 @@ FBI_STATE_CRIME = {
 def get_state_from_zip(zip_code: str) -> str | None:
     """Get state name from ZIP code. Cached to avoid repeat calls."""
     try:
-        url = f"https://api.census.gov/data/2022/acs/acs5?get=NAME&for=zip%20code%20tabulation%20area:{zip_code}"
+        url = f"https://api.census.gov/data/2023/acs/acs5?get=NAME&for=zip%20code%20tabulation%20area:{zip_code}"
         data = requests.get(url, timeout=10).json()
         if len(data) > 1 and "," in data[1][0]:
             return data[1][0].split(",")[-1].strip()
@@ -69,26 +69,32 @@ def compute_crime_score(zip_code: str, census_data: dict = None, osm_data: dict 
     income = census.get("median_income", None)
     edu = census.get("bachelors_rate", None)
 
-    income_risk = 1 - (min(max((income or 0) / 120000, 0), 1))
-    edu_risk = 1 - (min(max((edu or 0) / 60, 0), 1))
+    # Local signals (stronger indicators of neighborhood safety)
+    # High income and education strongly correlate with lower local crime
+    income_safety = min(max((income or 0) / 150000, 0), 1)   # 0=poor, 1=wealthy
+    edu_safety = min(max((edu or 0) / 65, 0), 1)             # 0=low edu, 1=high edu
 
     # 3) Use provided OSM data or fetch if not provided
     osm = osm_data if osm_data else fetch_osm_poi_data(zip_code)
     police_count = osm.get("police_stations", 0)
-    police_presence = min(police_count / 12, 1)  # normalized
+    police_presence = min(police_count / 10, 1)  # normalized
 
     # -------------------------------------------------
-    # Weighted Criminality Index
+    # Crime risk index (higher = more crime)
+    # Local signals weighted much more than state baseline
     # -------------------------------------------------
-    score_raw = (
-        0.45 * (baseline / 1000) +  # scale FBI to similar units
-        0.35 * income_risk +
-        0.20 * edu_risk -
-        0.10 * police_presence
+    state_risk = baseline / 1000  # scale FBI rate to 0-1 range
+
+    # Blend: 25% state baseline, 40% income signal, 25% education signal, 10% police
+    crime_risk = (
+        0.25 * state_risk +
+        0.40 * (1 - income_safety) +
+        0.25 * (1 - edu_safety) +
+        0.10 * (1 - police_presence)
     )
 
-    # Clamp to 0–100 scale
-    score_scaled = max(0, min(score_raw * 100, 100))
+    # Scale to 0-100 (crime_per_1k is used as a 0-100 risk score)
+    score_scaled = max(0, min(crime_risk * 100, 100))
 
     return {"crime_per_1k": round(score_scaled, 1)}
 

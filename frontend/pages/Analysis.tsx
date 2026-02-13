@@ -287,6 +287,8 @@ const Analysis: React.FC = () => {
         ]} />
         <MetricCard icon={<Heart />} title="Wellness" items={[
           { label: 'Hospitals', value: String(data.raw_data.health.hospitals) },
+          { label: 'Clinics', value: String(data.raw_data.osm?.clinics ?? 0) },
+          { label: 'Primary Care Centers', value: String(data.raw_data.health.primary_care_centers) },
           { label: 'Designation', value: data.raw_data.health.is_hpsa ? 'HPSA' : 'Standard' },
         ]} />
         <MetricCard icon={<Wifi />} title="Digital Access" items={[

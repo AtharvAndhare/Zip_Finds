@@ -44,7 +44,7 @@ def _instant_census(zip_code: str) -> dict:
     
     # All variables in one call
     vars_str = "B19013_001E,B15003_001E,B15003_022E,B15003_023E,B15003_024E,B15003_025E,B01003_001E,B25064_001E,B28002_001E,B28002_004E"
-    url = f"https://api.census.gov/data/2022/acs/acs5?get={vars_str}&for=zip%20code%20tabulation%20area:{zip_code}"
+    url = f"https://api.census.gov/data/2023/acs/acs5?get={vars_str}&for=zip%20code%20tabulation%20area:{zip_code}"
     
     if settings.CENSUS_API_KEY:
         url += f"&key={settings.CENSUS_API_KEY}"
@@ -202,18 +202,26 @@ def _get_state_from_zip(zip_code: str) -> str:
         return None
 
 def _instant_crime(zip_code: str, census: dict) -> dict:
-    """Compute crime score from Census data (no API call)."""
+    """Compute crime score from Census data (no API call).
+    Uses local signals (income/education) weighted more than state baseline."""
     state = _get_state_from_zip(zip_code)
     baseline = STATE_CRIME_RATES.get(state, 400) if state else 400
     
     income = census.get("income", 65000)
     edu = census.get("bachelors_rate", 32)
     
-    income_risk = 1 - min(max(income / 120000, 0), 1)
-    edu_risk = 1 - min(max(edu / 60, 0), 1)
+    state_risk = baseline / 1000
+    income_safety = min(max(income / 150000, 0), 1)
+    edu_safety = min(max(edu / 65, 0), 1)
     
-    score = 0.50 * (baseline / 1000) + 0.30 * income_risk + 0.20 * edu_risk
-    score_scaled = max(0, min(score * 100, 100))
+    # 25% state, 40% income, 25% education, 10% baseline police estimate
+    crime_risk = (
+        0.25 * state_risk +
+        0.40 * (1 - income_safety) +
+        0.25 * (1 - edu_safety) +
+        0.10 * 0.5  # neutral police estimate
+    )
+    score_scaled = max(0, min(crime_risk * 100, 100))
     
     return {"crime_per_1k": round(score_scaled, 1)}
 
@@ -232,10 +240,13 @@ def _instant_osm(census: dict) -> dict:
     transit = max(int(pop / 1500), 5)
     police = max(int(pop / 20000), 1)
     
+    hospitals = max(int(pop / 25000), 1)
+    
     return {
         "parks": parks,
         "grocery_stores": grocery,
         "clinics": clinics,
+        "hospitals": hospitals,
         "transit_stops": transit,
         "police_stations": police,
     }

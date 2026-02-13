@@ -18,12 +18,31 @@ OVERPASS_SERVERS = [
 # ==========================================
 # POIs (Including police for crime proxy)
 # ==========================================
+# Single-tag queries (one key=value per Overpass call)
 TAGS = {
     "parks": {"leisure": "park"},
     "grocery_stores": {"shop": "supermarket"},
     "clinics": {"amenity": "clinic"},
+    "hospitals": {"amenity": "hospital"},
     "transit_stops": {"public_transport": "platform"},
     "police_stations": {"amenity": "police"},
+}
+
+# Additional tags to query and merge into main categories
+EXTRA_TAGS = {
+    "parks": [
+        {"leisure": "nature_reserve"},
+        {"leisure": "playground"},
+        {"leisure": "recreation_ground"},
+    ],
+    "grocery_stores": [
+        {"shop": "convenience"},
+        {"shop": "grocery"},
+    ],
+    "transit_stops": [
+        {"highway": "bus_stop"},
+        {"railway": "station"},
+    ],
 }
 
 # Default search radius = 5000m
@@ -80,12 +99,13 @@ def cached_query(lat, lon, key, value):
 # Public function used by your app
 # ==========================================
 def fetch_osm_poi_data(zip_code: str) -> dict:
-    # MOCK MODE (unchanged behavior!)
+    # MOCK MODE
     if settings.USE_MOCK_DATA:
         return {
             "parks": 5,
             "grocery_stores": 12,
             "clinics": 4,
+            "hospitals": 2,
             "transit_stops": 24,
             "police_stations": 1,
         }
@@ -93,11 +113,17 @@ def fetch_osm_poi_data(zip_code: str) -> dict:
     lat, lon = zip_to_latlon(zip_code)
     results = {}
 
+    # Query primary tags
     for label, tag in TAGS.items():
         key = list(tag.keys())[0]
         value = tag[key]
-
-        # 🧠 Use local cache for identical queries
         results[label] = cached_query(lat, lon, key, value)
+
+    # Query extra tags and add to primary counts
+    for label, extra_list in EXTRA_TAGS.items():
+        for tag in extra_list:
+            key = list(tag.keys())[0]
+            value = tag[key]
+            results[label] += cached_query(lat, lon, key, value)
 
     return results

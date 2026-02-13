@@ -21,3 +21,18 @@ def store_zip_data(zip_code: str, data: dict):
         print(f"[CACHE] STORED ZIP {zip_code}")
     except Exception as e:
         print(f"[CACHE] WARNING: Failed to cache ZIP {zip_code}: {e}")
+
+
+def clear_zip_cache(zip_code: str = None):
+    """Clear cache for a specific ZIP or all ZIPs."""
+    try:
+        if zip_code:
+            supabase.table("zip_cache").delete().eq("zip_code", zip_code).execute()
+            print(f"[CACHE] CLEARED cache for ZIP {zip_code}")
+        else:
+            supabase.table("zip_cache").delete().neq("zip_code", "").execute()
+            print(f"[CACHE] CLEARED all cached data")
+        return True
+    except Exception as e:
+        print(f"[CACHE] WARNING: Failed to clear cache: {e}")
+        return False

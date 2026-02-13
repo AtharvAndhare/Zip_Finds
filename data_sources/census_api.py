@@ -15,7 +15,7 @@ CENSUS_API_KEY = settings.CENSUS_API_KEY or None
 # =============================
 # Fallback years (Newest → Oldest)
 # =============================
-ACS_YEARS = ["2022", "2021", "2020"]
+ACS_YEARS = ["2023", "2022", "2021"]
 
 # =============================
 # Shared session for connection pooling

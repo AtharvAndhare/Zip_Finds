@@ -23,6 +23,7 @@ from core.geo_utils import zip_to_latlon
 from llm.narrative_generator import generate_narrative
 from app.chatbot import answer_followup
 from app.personas import PERSONAS
+from db.zip_cache import clear_zip_cache
 
 # ──────────────────────────────────────────────
 # App Setup
@@ -34,8 +35,11 @@ CORS(app)  # Allow all origins so the React dev-server can reach the API
 # ──────────────────────────────────────────────
 # Helpers
 # ──────────────────────────────────────────────
-def _analyze_single_zip(zip_code: str) -> dict:
-    """Fetch + score + geo for one ZIP code."""
+def _analyze_single_zip(zip_code: str, fresh: bool = False) -> dict:
+    """Fetch + score + geo for one ZIP code.
+    If fresh=True, clears cache first to force live API calls."""
+    if fresh:
+        clear_zip_cache(zip_code)
     raw_data = collect_all_data(zip_code)
     scores = compute_scores(raw_data)
     lat, lon = zip_to_latlon(zip_code)
@@ -53,16 +57,29 @@ def _analyze_single_zip(zip_code: str) -> dict:
 
 @app.route("/api/analyze/<zip_code>", methods=["GET"])
 def analyze(zip_code: str):
-    """Analyze a single ZIP code — returns raw data, scores, and location."""
+    """Analyze a single ZIP code — returns raw data, scores, and location.
+    Add ?fresh=true to bypass cache and fetch live data."""
     normalized = normalize_zip(zip_code)
     if not is_valid_us_zip(normalized):
         return jsonify({"error": "Invalid US ZIP code"}), 400
 
+    fresh = request.args.get("fresh", "").lower() in ("true", "1", "yes")
+
     try:
-        result = _analyze_single_zip(normalized)
+        result = _analyze_single_zip(normalized, fresh=fresh)
         return jsonify(result)
     except Exception as e:
         print(f"[API] Error analyzing {normalized}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/cache/clear", methods=["POST"])
+def clear_cache():
+    """Clear all cached ZIP data. Use after updating scoring/data logic."""
+    try:
+        clear_zip_cache()
+        return jsonify({"status": "ok", "message": "All cache cleared"})
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 

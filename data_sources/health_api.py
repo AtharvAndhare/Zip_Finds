@@ -74,16 +74,16 @@ def fetch_primary_care_centers(zip_code: str) -> int:
 
 def fetch_hospitals_from_osm(osm_data: dict = None, zip_code: str = None) -> int:
     """
-    Get hospital count from OSM data.
+    Get actual hospital count from OSM data (amenity=hospital).
     
     OPTIMIZED: Accepts pre-fetched osm_data to avoid duplicate calls.
     """
     try:
         if osm_data:
-            return osm_data.get("clinics", 0)
+            return osm_data.get("hospitals", 0)
         elif zip_code:
             data = fetch_osm_poi_data(zip_code)
-            return data.get("clinics", 0)
+            return data.get("hospitals", 0)
         return 0
     except Exception:
         return 0

@@ -17,14 +17,14 @@ from db.zip_cache import get_cached_zip, store_zip_data
 from core.instant_aggregator import collect_all_data_instant
 
 
-def collect_all_data(zip_code: str, fast_mode: bool = True) -> dict:
+def collect_all_data(zip_code: str, fast_mode: bool = False) -> dict:
     """
     Unified data collector with Supabase caching.
     
     Args:
         zip_code: The ZIP code to fetch data for
-        fast_mode: If True (default), uses instant aggregator (~0.5-1.5s)
-                   If False, uses full API calls (~5-15s but more accurate)
+        fast_mode: If True, uses instant aggregator (~0.5-1.5s, estimated data)
+                   If False (default), uses full API calls (~5-15s but accurate)
     
     Steps:
       1) Check cache first.

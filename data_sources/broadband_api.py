@@ -89,7 +89,7 @@ def _fetch_broadband_pct(zip_code: str):
 
     # Construct URL manually (avoid encoding ambiguity)
     url = (
-        f"https://api.census.gov/data/2022/acs/acs5"
+        f"https://api.census.gov/data/2023/acs/acs5"
         f"?get={vars}&for=zip%20code%20tabulation%20area:{zip_code}"
     )
     if CENSUS_KEY:
@@ -125,7 +125,7 @@ def _get_density_factor(zip_code: str):
 
     vars = "ALAND,B01003_001E"  # land area + population
     url = (
-        f"https://api.census.gov/data/2020/acs/acs5"
+        f"https://api.census.gov/data/2023/acs/acs5"
         f"?get={vars}&for=zip%20code%20tabulation%20area:{zip_code}"
     )
     if CENSUS_KEY:

@@ -61,21 +61,27 @@ def compute_scores(data: dict) -> dict:
     economic = round((education + income_score) / 2.0, 1)
 
 
-    # 5. HOUSING AFFORDABILITY (Census-based)
+    # 5. HOUSING AFFORDABILITY (Census-based, income-adjusted)
    
     median_rent = safe_number(housing.get("median_rent", 0))
     rent_burden = housing.get("rent_to_income")  # already a ratio 0–1
 
-    # 5A. Prefer rent burden if present from Census B25070
+    # 5A. Compute base affordability from rent burden ratio
     if rent_burden is not None and rent_burden > 0:
-        housing_aff = _normalize(rent_burden, "rent_to_income", invert=True)
+        base_housing = _normalize(rent_burden, "rent_to_income", invert=True)
     else:
-        # 5B. Fallback: derive rent burden from income & rent
+        # 5B. Fallback: derive rent burden from income & rent (monthly rent / monthly income)
         rent_to_income = (
-            median_rent / median_income if median_income > 0 else 0.6
+            median_rent / (median_income / 12) if median_income > 0 else 0.6
         )
         rent_to_income = safe_number(rent_to_income)
-        housing_aff = _normalize(rent_to_income, "rent_to_income", invert=True)
+        base_housing = _normalize(rent_to_income, "rent_to_income", invert=True)
+
+    # 5C. Income-adjustment: high-income areas can absorb higher rents
+    # A household earning $150k+ paying 30% on rent is in a very different
+    # situation than one earning $30k paying 30%.
+    income_comfort = min(max(median_income / 120000, 0), 1) * 15  # up to +15 bonus
+    housing_aff = min(base_housing + income_comfort, 100)
 
     
     # DIGITAL ACCESS
