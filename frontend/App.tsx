@@ -112,6 +112,11 @@ const App: React.FC = () => {
         )}
       </header>
 
+      {/* Maintenance Banner */}
+      <div className="bg-black/90 backdrop-blur-sm text-white text-center py-3 px-6 text-sm font-medium z-40 relative">
+        We are currently enriching our database with more accurate data. Some ZIP codes may take longer to load for the next few days. Thank you for your patience.
+      </div>
+
       {/* Main Content Area */}
       <main className="flex-grow">
         {/* Fix: Added Loader2 import to support the spinner in Suspense fallback */}
