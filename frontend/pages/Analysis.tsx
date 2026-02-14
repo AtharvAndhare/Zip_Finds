@@ -144,9 +144,13 @@ const Analysis: React.FC = () => {
   const lat = data.location?.lat ?? 40.7128;
   const lon = data.location?.lon ?? -74.006;
 
-  // Format helpers
-  const fmtDollar = (v: number) => `$${v.toLocaleString()}`;
-  const fmtPct = (v: number) => (v > 1 ? `${v.toFixed(1)}%` : `${(v * 100).toFixed(1)}%`);
+  // Format helpers (null-safe)
+  const fmtDollar = (v: number | null | undefined) => v != null ? `$${v.toLocaleString()}` : 'N/A';
+  const fmtPct = (v: number | null | undefined) => {
+    if (v == null) return 'N/A';
+    return v > 1 ? `${v.toFixed(1)}%` : `${(v * 100).toFixed(1)}%`;
+  };
+  const safe = (v: any, fallback: string = 'N/A') => v != null ? String(v) : fallback;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-16">
@@ -275,42 +279,42 @@ const Analysis: React.FC = () => {
       <h2 className="text-2xl font-black text-black mt-20 mb-8 uppercase tracking-tighter">Attribute Explorer</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <MetricCard icon={<DollarSign />} title="Finance" items={[
-          { label: 'Median Income', value: fmtDollar(data.raw_data.census.median_income) },
-          { label: 'Population', value: data.raw_data.census.resident_base.toLocaleString() },
+          { label: 'Median Income', value: fmtDollar(data.raw_data.census?.median_income) },
+          { label: 'Population', value: safe(data.raw_data.census?.resident_base?.toLocaleString()) },
         ]} />
         <MetricCard icon={<GraduationCap />} title="Education" items={[
-          { label: "Bachelor's+", value: fmtPct(data.raw_data.census.bachelors_rate) },
+          { label: "Bachelor's+", value: fmtPct(data.raw_data.census?.bachelors_rate) },
         ]} />
         <MetricCard icon={<HomeIcon />} title="Housing" items={[
-          { label: 'Median Rent', value: fmtDollar(data.raw_data.housing.median_rent) },
-          { label: 'Rent / Income', value: fmtPct(data.raw_data.housing.rent_to_income) },
+          { label: 'Median Rent', value: fmtDollar(data.raw_data.housing?.median_rent) },
+          { label: 'Rent / Income', value: fmtPct(data.raw_data.housing?.rent_to_income) },
         ]} />
         <MetricCard icon={<Heart />} title="Wellness" items={[
-          { label: 'Hospitals', value: String(data.raw_data.health.hospitals) },
-          { label: 'Clinics', value: String(data.raw_data.osm?.clinics ?? 0) },
-          { label: 'Primary Care Centers', value: String(data.raw_data.health.primary_care_centers) },
-          { label: 'Designation', value: data.raw_data.health.is_hpsa ? 'HPSA' : 'Standard' },
+          { label: 'Hospitals', value: safe(data.raw_data.health?.hospitals, '0') },
+          { label: 'Clinics', value: safe(data.raw_data.osm?.clinics, '0') },
+          { label: 'Primary Care Centers', value: safe(data.raw_data.health?.primary_care_centers, '0') },
+          { label: 'Designation', value: data.raw_data.health?.is_hpsa ? 'HPSA' : 'Standard' },
         ]} />
         <MetricCard icon={<Wifi />} title="Digital Access" items={[
-          { label: 'Broadband', value: fmtPct(data.raw_data.broadband.broadband_pct) },
-          { label: 'Fiber', value: fmtPct(data.raw_data.broadband.fiber_pct) },
-          { label: 'Cable', value: fmtPct(data.raw_data.broadband.cable_pct) },
+          { label: 'Broadband', value: fmtPct(data.raw_data.broadband?.broadband_pct) },
+          { label: 'Fiber', value: fmtPct(data.raw_data.broadband?.fiber_pct) },
+          { label: 'Cable', value: fmtPct(data.raw_data.broadband?.cable_pct) },
         ]} />
         <MetricCard icon={<Shield />} title="Safety" items={[
-          { label: 'Crime Rate', value: data.raw_data.crime.crime_per_1k.toFixed(1) + ' per 1k' },
+          { label: 'Crime Rate', value: data.raw_data.crime?.crime_per_1k != null ? data.raw_data.crime.crime_per_1k.toFixed(1) + ' per 1k' : 'N/A' },
         ]} />
         <MetricCard icon={<MapPin />} title="Points of Interest" items={[
-          { label: 'Parks', value: String(data.raw_data.osm.parks) },
-          { label: 'Transit', value: String(data.raw_data.osm.transit_stops) },
-          { label: 'Grocery', value: String(data.raw_data.osm.grocery_stores) },
+          { label: 'Parks', value: safe(data.raw_data.osm?.parks, '0') },
+          { label: 'Transit', value: safe(data.raw_data.osm?.transit_stops, '0') },
+          { label: 'Grocery', value: safe(data.raw_data.osm?.grocery_stores, '0') },
         ]} />
         <MetricCard icon={<Wind />} title="Environment" items={[
-          { label: 'AQI', value: String(data.raw_data.air_quality.aqi) },
-          { label: 'Category', value: data.raw_data.air_quality.category },
+          { label: 'AQI', value: safe(data.raw_data.air_quality?.aqi) },
+          { label: 'Category', value: safe(data.raw_data.air_quality?.category) },
         ]} />
         <MetricCard icon={<Car />} title="Accessibility" items={[
-          { label: 'Clinics', value: String(data.raw_data.osm.clinics) },
-          { label: 'Transit Stops', value: String(data.raw_data.osm.transit_stops) },
+          { label: 'Clinics', value: safe(data.raw_data.osm?.clinics, '0') },
+          { label: 'Transit Stops', value: safe(data.raw_data.osm?.transit_stops, '0') },
         ]} />
       </div>
 
