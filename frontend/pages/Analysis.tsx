@@ -74,7 +74,7 @@ const Analysis: React.FC = () => {
   }, [zip]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [chatHistory]);
 
   const handleChat = async (e: React.FormEvent) => {
