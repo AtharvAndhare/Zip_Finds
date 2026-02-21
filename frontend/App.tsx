@@ -114,7 +114,7 @@ const App: React.FC = () => {
 
       {/* Maintenance Banner */}
       <div className="bg-black/90 backdrop-blur-sm text-white text-center py-3 px-6 text-sm font-medium z-40 relative">
-        We are currently enriching our database with more accurate data. Some ZIP codes may take longer to load for the next few days. Thank you for your patience.
+        Data enrichment in progress. States ready: <span className="text-brand font-bold">NJ</span> | Coming soon: MD, MA, AZ, WA, NY, CA, TX
       </div>
 
       {/* Main Content Area */}
