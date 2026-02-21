@@ -1,12 +1,18 @@
 # app/main.py
 
-
 import sys, os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-
 import streamlit as st
+
+# Redirect to new site
+st.markdown(
+    '<meta http-equiv="refresh" content="0; url=https://zipfinds.vercel.app/">',
+    unsafe_allow_html=True
+)
+st.markdown("Redirecting to [zipfinds.vercel.app](https://zipfinds.vercel.app/)...")
+st.stop()
 
 from config.settings import settings
 from data_sources.zip_validator import is_valid_us_zip, normalize_zip
