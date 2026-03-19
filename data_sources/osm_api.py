@@ -9,10 +9,11 @@ from core.geo_utils import zip_to_latlon
 # ==========================================
 # 1) Overpass Mirrors (fallback + rotation)
 # ==========================================
+# kumi.systems deprecated - migrated to private.coffee; both can be unreliable from some regions
 OVERPASS_SERVERS = [
     "https://overpass-api.de/api/interpreter",
     "https://lz4.overpass-api.de/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",  # formerly kumi.systems
 ]
 
 # ==========================================

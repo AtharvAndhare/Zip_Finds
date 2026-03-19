@@ -4,7 +4,6 @@ import functools
 import requests
 from concurrent.futures import ThreadPoolExecutor
 from config.settings import settings
-from core.geo_utils import zip_to_latlon
 from data_sources.osm_api import fetch_osm_poi_data
 
 # =============================

@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from data_sources.census_api import fetch_census_data
 from data_sources.health_api import fetch_health_data
 from data_sources.crime_api import fetch_crime_data, compute_crime_score
-from data_sources.osm_api import fetch_osm_poi_data  
+from data_sources.osm_api import fetch_osm_poi_data
 from data_sources.housing_api import fetch_housing_data
 from data_sources.broadband_api import fetch_broadband_data
 from data_sources.air_quality_api import fetch_air_quality_data
