@@ -96,12 +96,12 @@ def compute_scores(data: dict) -> dict:
     environment = _normalize(aqi, "aqi", invert=True)
 
     
-    # ACCESSIBILITY (OSM Points)
+    # ACCESSIBILITY (OSM Points — uses 10km radius when available, falls back to 5km)
    
-    parks = safe_number(osm.get("parks", 0))
-    grocery = safe_number(osm.get("grocery_stores", 0))
-    clinics = safe_number(osm.get("clinics", 0))
-    transit = safe_number(osm.get("transit_stops", 0))
+    parks = safe_number(osm.get("parks_10km", osm.get("parks", 0)))
+    grocery = safe_number(osm.get("grocery_stores_10km", osm.get("grocery_stores", 0)))
+    clinics = safe_number(osm.get("clinics_10km", osm.get("clinics", 0)))
+    transit = safe_number(osm.get("transit_stops_10km", osm.get("transit_stops", 0)))
 
     poi_total = parks * 3 + grocery * 2 + clinics * 4 + transit * 1
     accessibility = min(round((poi_total / 200) * 100, 1), 100)

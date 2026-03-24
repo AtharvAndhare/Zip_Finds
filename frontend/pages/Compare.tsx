@@ -196,9 +196,12 @@ const Compare: React.FC = () => {
                    <MetricRow label="Broadband Coverage" path="raw_data.broadband.broadband_pct" results={results} formatter={(v) => v > 1 ? `${v.toFixed(1)}%` : `${(v * 100).toFixed(1)}%`} />
                    <MetricRow label="Air Quality (AQI)" path="raw_data.air_quality.aqi" results={results} />
                    <MetricRow label="Crime Rate" path="raw_data.crime.crime_per_1k" results={results} formatter={(v) => v.toFixed(1)} />
-                   <MetricRow label="Hospitals" path="raw_data.health.hospitals" results={results} />
-                   <MetricRow label="Parks" path="raw_data.osm.parks" results={results} />
-                   <MetricRow label="Transit Stops" path="raw_data.osm.transit_stops" results={results} />
+                   <MetricRow label="Hospitals (5 km)" path="raw_data.osm.hospitals" results={results} />
+                   <MetricRow label="Hospitals (10 km)" path="raw_data.osm.hospitals_10km" results={results} />
+                   <MetricRow label="Parks (5 km)" path="raw_data.osm.parks" results={results} />
+                   <MetricRow label="Parks (10 km)" path="raw_data.osm.parks_10km" results={results} />
+                   <MetricRow label="Transit Stops (5 km)" path="raw_data.osm.transit_stops" results={results} />
+                   <MetricRow label="Transit Stops (10 km)" path="raw_data.osm.transit_stops_10km" results={results} />
                  </tbody>
                </table>
              </div>

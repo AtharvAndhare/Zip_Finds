@@ -290,8 +290,10 @@ const Analysis: React.FC = () => {
           { label: 'Rent / Income', value: fmtPct(data.raw_data.housing?.rent_to_income) },
         ]} />
         <MetricCard icon={<Heart />} title="Wellness" items={[
-          { label: 'Hospitals', value: safe(data.raw_data.health?.hospitals, '0') },
-          { label: 'Clinics', value: safe(data.raw_data.osm?.clinics, '0') },
+          { label: 'Hospitals (5 km)', value: safe(data.raw_data.osm?.hospitals, '0') },
+          { label: 'Hospitals (10 km)', value: safe(data.raw_data.osm?.hospitals_10km, '0') },
+          { label: 'Clinics (5 km)', value: safe(data.raw_data.osm?.clinics, '0') },
+          { label: 'Clinics (10 km)', value: safe(data.raw_data.osm?.clinics_10km, '0') },
           { label: 'Primary Care Centers', value: safe(data.raw_data.health?.primary_care_centers, '0') },
           { label: 'Designation', value: data.raw_data.health?.is_hpsa ? 'HPSA' : 'Standard' },
         ]} />
@@ -304,17 +306,24 @@ const Analysis: React.FC = () => {
           { label: 'Crime Rate', value: data.raw_data.crime?.crime_per_1k != null ? data.raw_data.crime.crime_per_1k.toFixed(1) + ' per 1k' : 'N/A' },
         ]} />
         <MetricCard icon={<MapPin />} title="Points of Interest" items={[
-          { label: 'Parks', value: safe(data.raw_data.osm?.parks, '0') },
-          { label: 'Transit', value: safe(data.raw_data.osm?.transit_stops, '0') },
-          { label: 'Grocery', value: safe(data.raw_data.osm?.grocery_stores, '0') },
+          { label: 'Parks (5 km)', value: safe(data.raw_data.osm?.parks, '0') },
+          { label: 'Parks (10 km)', value: safe(data.raw_data.osm?.parks_10km, '0') },
+          { label: 'Transit (5 km)', value: safe(data.raw_data.osm?.transit_stops, '0') },
+          { label: 'Transit (10 km)', value: safe(data.raw_data.osm?.transit_stops_10km, '0') },
+          { label: 'Grocery (5 km)', value: safe(data.raw_data.osm?.grocery_stores, '0') },
+          { label: 'Grocery (10 km)', value: safe(data.raw_data.osm?.grocery_stores_10km, '0') },
         ]} />
         <MetricCard icon={<Wind />} title="Environment" items={[
           { label: 'AQI', value: safe(data.raw_data.air_quality?.aqi) },
           { label: 'Category', value: safe(data.raw_data.air_quality?.category) },
         ]} />
         <MetricCard icon={<Car />} title="Accessibility" items={[
-          { label: 'Clinics', value: safe(data.raw_data.osm?.clinics, '0') },
-          { label: 'Transit Stops', value: safe(data.raw_data.osm?.transit_stops, '0') },
+          { label: 'Clinics (5 km)', value: safe(data.raw_data.osm?.clinics, '0') },
+          { label: 'Clinics (10 km)', value: safe(data.raw_data.osm?.clinics_10km, '0') },
+          { label: 'Transit Stops (5 km)', value: safe(data.raw_data.osm?.transit_stops, '0') },
+          { label: 'Transit Stops (10 km)', value: safe(data.raw_data.osm?.transit_stops_10km, '0') },
+          { label: 'Police (5 km)', value: safe(data.raw_data.osm?.police_stations, '0') },
+          { label: 'Police (10 km)', value: safe(data.raw_data.osm?.police_stations_10km, '0') },
         ]} />
       </div>
 

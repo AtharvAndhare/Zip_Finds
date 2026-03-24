@@ -79,10 +79,10 @@ def fetch_hospitals_from_osm(osm_data: dict = None, zip_code: str = None) -> int
     """
     try:
         if osm_data:
-            return osm_data.get("hospitals", 0)
+            return osm_data.get("hospitals_10km", osm_data.get("hospitals", 0))
         elif zip_code:
             data = fetch_osm_poi_data(zip_code)
-            return data.get("hospitals", 0)
+            return data.get("hospitals_10km", data.get("hospitals", 0))
         return 0
     except Exception:
         return 0

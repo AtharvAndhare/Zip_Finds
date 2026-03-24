@@ -4,7 +4,12 @@ export interface RawData {
   broadband: { broadband_pct: number; fiber_pct: number; cable_pct: number };
   health: { hospitals: number; primary_care_centers: number; is_hpsa: boolean };
   crime: { crime_per_1k: number };
-  osm: { parks: number; transit_stops: number; grocery_stores: number; clinics: number };
+  osm: {
+    parks: number; transit_stops: number; grocery_stores: number; clinics: number;
+    hospitals: number; police_stations: number;
+    parks_10km: number; transit_stops_10km: number; grocery_stores_10km: number;
+    clinics_10km: number; hospitals_10km: number; police_stations_10km: number;
+  };
   air_quality: { aqi: number; category: string; pollutant: string };
 }
 

@@ -46,20 +46,21 @@ EXTRA_TAGS = {
     ],
 }
 
-# Default search radius = 5000m
-SEARCH_RADIUS = 5000
+# Search radii
+SEARCH_RADIUS = 5000     # 5 km — walkable / near range
+SEARCH_RADIUS_WIDE = 10000  # 10 km — driving-distance range
 
 
 # ==========================================
 # Central Query Function (with silent fallback)
 # ==========================================
-def _query_osm(lat: float, lon: float, tag_key: str, tag_val: str):
+def _query_osm(lat: float, lon: float, tag_key: str, tag_val: str, radius: int = SEARCH_RADIUS):
     query = f"""
     [out:json][timeout:25];
     (
-      node["{tag_key}"="{tag_val}"](around:{SEARCH_RADIUS},{lat},{lon});
-      way["{tag_key}"="{tag_val}"](around:{SEARCH_RADIUS},{lat},{lon});
-      relation["{tag_key}"="{tag_val}"](around:{SEARCH_RADIUS},{lat},{lon});
+      node["{tag_key}"="{tag_val}"](around:{radius},{lat},{lon});
+      way["{tag_key}"="{tag_val}"](around:{radius},{lat},{lon});
+      relation["{tag_key}"="{tag_val}"](around:{radius},{lat},{lon});
     );
     out count;
     """
@@ -91,40 +92,53 @@ def _query_osm(lat: float, lon: float, tag_key: str, tag_val: str):
 # ==========================================
 # ⚡ Local Cache (Prevents repeated API hits)
 # ==========================================
-@functools.lru_cache(maxsize=500)
-def cached_query(lat, lon, key, value):
-    return _query_osm(lat, lon, key, value)
+@functools.lru_cache(maxsize=1000)
+def cached_query(lat, lon, key, value, radius=SEARCH_RADIUS):
+    return _query_osm(lat, lon, key, value, radius=radius)
 
 
 # ==========================================
 # Public function used by your app
 # ==========================================
-def fetch_osm_poi_data(zip_code: str) -> dict:
-    # MOCK MODE
-    if settings.USE_MOCK_DATA:
-        return {
-            "parks": 5,
-            "grocery_stores": 12,
-            "clinics": 4,
-            "hospitals": 2,
-            "transit_stops": 24,
-            "police_stations": 1,
-        }
-
-    lat, lon = zip_to_latlon(zip_code)
+def _fetch_at_radius(lat: float, lon: float, radius: int) -> dict:
+    """Fetch all POI counts at a given radius."""
     results = {}
 
-    # Query primary tags
     for label, tag in TAGS.items():
         key = list(tag.keys())[0]
         value = tag[key]
-        results[label] = cached_query(lat, lon, key, value)
+        results[label] = cached_query(lat, lon, key, value, radius)
 
-    # Query extra tags and add to primary counts
     for label, extra_list in EXTRA_TAGS.items():
         for tag in extra_list:
             key = list(tag.keys())[0]
             value = tag[key]
-            results[label] += cached_query(lat, lon, key, value)
+            results[label] += cached_query(lat, lon, key, value, radius)
+
+    return results
+
+
+def fetch_osm_poi_data(zip_code: str) -> dict:
+    """
+    Returns POI counts at two radii:
+      - 5km keys: parks, grocery_stores, clinics, hospitals, transit_stops, police_stations
+      - 10km keys: parks_10km, grocery_stores_10km, clinics_10km, hospitals_10km, transit_stops_10km, police_stations_10km
+    """
+    if settings.USE_MOCK_DATA:
+        return {
+            "parks": 5, "grocery_stores": 12, "clinics": 4,
+            "hospitals": 2, "transit_stops": 24, "police_stations": 1,
+            "parks_10km": 12, "grocery_stores_10km": 28, "clinics_10km": 9,
+            "hospitals_10km": 5, "transit_stops_10km": 48, "police_stations_10km": 3,
+        }
+
+    lat, lon = zip_to_latlon(zip_code)
+
+    near = _fetch_at_radius(lat, lon, SEARCH_RADIUS)
+    wide = _fetch_at_radius(lat, lon, SEARCH_RADIUS_WIDE)
+
+    results = dict(near)
+    for label, count in wide.items():
+        results[f"{label}_10km"] = count
 
     return results
