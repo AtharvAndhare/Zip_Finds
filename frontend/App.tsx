@@ -114,7 +114,7 @@ const App: React.FC = () => {
 
       {/* Maintenance Banner */}
       <div className="bg-black/90 backdrop-blur-sm text-white text-center py-3 px-6 text-sm font-medium z-40 relative">
-        Data enrichment in progress. States ready: <span className="text-brand font-bold">NJ, MD</span> | Coming soon: MA, AZ, WA, NY, CA, TX
+        Data enrichment in progress. States ready: <span className="text-brand font-bold">NJ, MD, NY</span> | Coming soon: MA, AZ, WA, CA, TX
       </div>
 
       {/* Main Content Area */}
