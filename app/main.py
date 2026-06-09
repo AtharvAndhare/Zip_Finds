@@ -314,7 +314,13 @@ def main():
         if followup.strip():
             with st.spinner("Thinking..."):
                 latest_scores = st.session_state.get("computed_scores") or scores
-                reply = answer_followup(zip_code, persona, latest_scores, followup.strip())
+                reply = answer_followup(
+                    zip_code,
+                    persona,
+                    latest_scores,
+                    followup.strip(),
+                    raw_data=raw_data,
+                )
             st.markdown("**Chatbot:**")
             st.markdown(reply)
         else:

@@ -89,12 +89,21 @@ const Analysis: React.FC = () => {
     if (!chatMessage.trim() || !data || isChatting) return;
 
     const userQuery = chatMessage;
+    const priorHistory = chatHistory;
     setChatHistory((prev) => [...prev, { role: 'user', text: userQuery }]);
     setChatMessage('');
     setIsChatting(true);
 
     try {
-      const response = await chatWithZip(data.zip_code, userQuery, data.scores);
+      const response = await chatWithZip(
+        data.zip_code,
+        userQuery,
+        data.scores,
+        'General',
+        data.raw_data,
+        data.location,
+        priorHistory,
+      );
       setChatHistory((prev) => [...prev, { role: 'ai', text: response.reply }]);
     } catch (err: any) {
       console.error('Chat Error:', err);

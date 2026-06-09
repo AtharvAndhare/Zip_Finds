@@ -116,13 +116,24 @@ def chat():
     zip_code = body.get("zip_code", "")
     question = body.get("question", "")
     scores = body.get("scores", {})
+    raw_data = body.get("raw_data")
+    location = body.get("location")
+    history = body.get("history", [])
     persona = body.get("persona", "General")
 
     if not zip_code or not question:
         return jsonify({"error": "zip_code and question are required"}), 400
 
     try:
-        reply = answer_followup(zip_code, persona, scores, question)
+        reply = answer_followup(
+            zip_code,
+            persona,
+            scores,
+            question,
+            raw_data=raw_data,
+            location=location,
+            history=history,
+        )
         return jsonify({"reply": reply})
     except Exception as e:
         print(f"[API] Chat error: {e}")

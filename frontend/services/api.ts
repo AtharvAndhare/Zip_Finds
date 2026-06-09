@@ -28,13 +28,19 @@ export const chatWithZip = async (
   zip: string,
   question: string,
   scores: any,
-  persona: string = 'General'
+  persona: string = 'General',
+  rawData?: any,
+  location?: { lat: number; lon: number },
+  history?: { role: 'user' | 'ai'; text: string }[]
 ): Promise<ChatResponse> => {
   const response = await apiClient.post<ChatResponse>('/api/chat', {
     zip_code: zip,
     question,
     scores,
     persona,
+    raw_data: rawData,
+    location,
+    history,
   });
   return response.data;
 };
