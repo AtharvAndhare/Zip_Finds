@@ -41,7 +41,11 @@ const Analysis: React.FC = () => {
   const [isChatting, setIsChatting] = useState(false);
   const [narrative, setNarrative] = useState<string | null>(null);
   const [narrativeLoading, setNarrativeLoading] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [zip]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,8 +78,11 @@ const Analysis: React.FC = () => {
   }, [zip]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [chatHistory]);
+    if (chatHistory.length === 0) return;
+    const container = chatContainerRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+  }, [chatHistory, isChatting]);
 
   const handleChat = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,7 +232,7 @@ const Analysis: React.FC = () => {
               <Bot className="h-4 w-4 mr-2 text-brand" />
               Intelligence Lead
             </h3>
-            <div className="h-64 overflow-y-auto mb-6 space-y-4 pr-2 text-sm">
+            <div ref={chatContainerRef} className="h-64 overflow-y-auto mb-6 space-y-4 pr-2 text-sm">
               {chatHistory.length === 0 && (
                 <p className="text-white/20 italic text-center mt-12">
                   System ready. Ask about local metrics...
@@ -245,7 +252,6 @@ const Analysis: React.FC = () => {
                 </div>
               ))}
               {isChatting && <div className="animate-pulse text-brand font-bold">Analyst is typing...</div>}
-              <div ref={chatEndRef} />
             </div>
             <form onSubmit={handleChat} className="relative">
               <input
@@ -290,10 +296,8 @@ const Analysis: React.FC = () => {
           { label: 'Rent / Income', value: fmtPct(data.raw_data.housing?.rent_to_income) },
         ]} />
         <MetricCard icon={<Heart />} title="Wellness" items={[
-          { label: 'Hospitals (5 km)', value: safe(data.raw_data.osm?.hospitals, '0') },
-          { label: 'Hospitals (10 km)', value: safe(data.raw_data.osm?.hospitals_10km, '0') },
-          { label: 'Clinics (5 km)', value: safe(data.raw_data.osm?.clinics, '0') },
-          { label: 'Clinics (10 km)', value: safe(data.raw_data.osm?.clinics_10km, '0') },
+          { label: 'Hospitals', value: safe(data.raw_data.osm?.hospitals, '0') },
+          { label: 'Clinics', value: safe(data.raw_data.osm?.clinics, '0') },
           { label: 'Primary Care Centers', value: safe(data.raw_data.health?.primary_care_centers, '0') },
           { label: 'Designation', value: data.raw_data.health?.is_hpsa ? 'HPSA' : 'Standard' },
         ]} />
@@ -306,24 +310,18 @@ const Analysis: React.FC = () => {
           { label: 'Crime Rate', value: data.raw_data.crime?.crime_per_1k != null ? data.raw_data.crime.crime_per_1k.toFixed(1) + ' per 1k' : 'N/A' },
         ]} />
         <MetricCard icon={<MapPin />} title="Points of Interest" items={[
-          { label: 'Parks (5 km)', value: safe(data.raw_data.osm?.parks, '0') },
-          { label: 'Parks (10 km)', value: safe(data.raw_data.osm?.parks_10km, '0') },
-          { label: 'Transit (5 km)', value: safe(data.raw_data.osm?.transit_stops, '0') },
-          { label: 'Transit (10 km)', value: safe(data.raw_data.osm?.transit_stops_10km, '0') },
-          { label: 'Grocery (5 km)', value: safe(data.raw_data.osm?.grocery_stores, '0') },
-          { label: 'Grocery (10 km)', value: safe(data.raw_data.osm?.grocery_stores_10km, '0') },
+          { label: 'Parks', value: safe(data.raw_data.osm?.parks, '0') },
+          { label: 'Transit', value: safe(data.raw_data.osm?.transit_stops, '0') },
+          { label: 'Grocery', value: safe(data.raw_data.osm?.grocery_stores, '0') },
         ]} />
         <MetricCard icon={<Wind />} title="Environment" items={[
           { label: 'AQI', value: safe(data.raw_data.air_quality?.aqi) },
           { label: 'Category', value: safe(data.raw_data.air_quality?.category) },
         ]} />
         <MetricCard icon={<Car />} title="Accessibility" items={[
-          { label: 'Clinics (5 km)', value: safe(data.raw_data.osm?.clinics, '0') },
-          { label: 'Clinics (10 km)', value: safe(data.raw_data.osm?.clinics_10km, '0') },
-          { label: 'Transit Stops (5 km)', value: safe(data.raw_data.osm?.transit_stops, '0') },
-          { label: 'Transit Stops (10 km)', value: safe(data.raw_data.osm?.transit_stops_10km, '0') },
-          { label: 'Police (5 km)', value: safe(data.raw_data.osm?.police_stations, '0') },
-          { label: 'Police (10 km)', value: safe(data.raw_data.osm?.police_stations_10km, '0') },
+          { label: 'Clinics', value: safe(data.raw_data.osm?.clinics, '0') },
+          { label: 'Transit Stops', value: safe(data.raw_data.osm?.transit_stops, '0') },
+          { label: 'Police', value: safe(data.raw_data.osm?.police_stations, '0') },
         ]} />
       </div>
 
